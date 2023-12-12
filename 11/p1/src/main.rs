@@ -47,7 +47,7 @@ fn main() {
         }
     }
     
-    // change variable space_size to 1 to solve for part 1
+    // change variable space_size to 2 to solve for part 1
     let space_size = 1000000;
     let mut result = 0;
     for galaxy_start in &galaxies {
@@ -67,7 +67,7 @@ fn main() {
                         galaxy_start.0.min(galaxy_end.0) < **col && **col < galaxy_start.0.max(galaxy_end.0)
                     })
                 .count();
-                let distance_y = galaxy_start.0.abs_diff(galaxy_end.0) + num_of_empty_rows * space_size - num_of_empty_rows;
+                let distance_y = galaxy_start.0.abs_diff(galaxy_end.0) + num_of_empty_rows * (space_size - 1);
 
                 result += distance_x + distance_y;
             }
