@@ -1,13 +1,21 @@
 use std::{fs, collections::HashMap, usize};
 
-fn is_prime(x: usize) -> bool {
-    for i in 2..x/2 {
-        if x % i == 0 {
-            return false;
+fn nwd(aa: i128, bb: i128) -> i128 {
+    let mut a = aa;
+    let mut b = bb;
+    while a != b {
+        //println!("{} {}", a, b);
+        if a > b {
+            a -= b;
+        } else {
+            b -= a;
         }
     }
+    return a;
+}
 
-    return true;
+fn nww(a: i128, b: i128) -> i128 {
+    return a*b / nwd(a, b);
 }
 
 fn main() {
@@ -93,6 +101,12 @@ fn main() {
     .collect();
 
     println!("{:?}", cycles);
+
+    let mut result = 1;
+    for cycle in cycles {
+        result = nww(result, cycle.0 as i128);
+    }
+    println!("{}", result);
 
     //println!("{:?}", z_positions_all);
 }
