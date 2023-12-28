@@ -1,4 +1,5 @@
 use std::{fs, collections::HashMap, io, iter::Sum};
+use colored::Colorize;
 
 
 const DIRECTIONS: [[i32; 2]; 4] = [
@@ -103,7 +104,7 @@ fn compare_directions(last_dir: usize, curr_dir: usize) -> i32 {
 }
 
 fn main() {
-    let input = fs::read_to_string("test2").unwrap();
+    let input = fs::read_to_string("input").unwrap();
 
     let PIPES: HashMap<char, [bool; 4]> = HashMap::from([
         ('.', [false, false, false, false]),
@@ -129,7 +130,7 @@ fn main() {
         .position(|c| c == 'S')
         .unwrap();
 
-    
+    let mut visited_tiles: Vec<(usize, usize)> = vec![];
     let max_steps = 10000;
     let mut distance_map: Vec<Vec<i32>> = vec![vec![max_steps + 1; width]; height];
     distance_map[start_y][start_x] = 0;
@@ -138,6 +139,7 @@ fn main() {
         for y in 0..height {
             for x in 0..width {
                 if distance_map[y][x] == step {
+                    visited_tiles.push((y, x));
                     for dir in DIRECTIONS.iter().enumerate() {
                         let ya = y as i32 + dir.1[1];
                         let xa = x as i32 + dir.1[0];
@@ -198,7 +200,7 @@ fn main() {
     
     let mut lefts_n_rights: Vec<Vec<i32>> = vec![vec![0; width]; height];
     while !(current_pos[0] == start_x && current_pos[1] == start_y && step != 0) {
-        print_map(input_lines, &current_pos);
+        //print_map(input_lines, &current_pos);
         *pipe_counter.get_mut(&get_pipe(current_pos[0], current_pos[1], input_lines)).unwrap() += 1;
         for dir in DIRECTIONS.iter().enumerate() {
             let ya = current_pos[1] as i32 + dir.1[1];
@@ -208,12 +210,35 @@ fn main() {
                 continue;
             }
             
+            
+            let direction_right = DIRECTIONS.get(modulo((dir.0 + 1).try_into().unwrap(), 4) as usize).unwrap();
+            let direction_left = DIRECTIONS.get(modulo((dir.0 as i32 - 1), 4) as usize).unwrap();
+
+            let x0 = direction_right[0] + current_pos[0] as i32;
+            let y0 = direction_right[1] + current_pos[1] as i32;
+            let y1 = direction_left[1] + current_pos[1] as i32;
+            let x1 = direction_left[0] + current_pos[0] as i32;
+
+            if y0 >= 0 && y0 < height.try_into().unwrap() && x0 >=0 && x0 < width.try_into().unwrap() {
+                lefts_n_rights[
+                    y0 as usize
+                ][
+                x0 as usize
+                ] = 1;
+            }
+            if y1 >= 0 && y1 < height.try_into().unwrap() && x1 >= 0 && x1 < width.try_into().unwrap() {
+                lefts_n_rights[
+                    y1 as usize
+                ][
+                x1 as usize
+                ] = -1;
+            }
+
             current_pos[0] = xa as usize;
             current_pos[1] = ya as usize;
             distance_map[current_pos[1]][current_pos[0]] = max_steps - 10;
             println!("pos: {:?}", current_pos);
             if step >= 1 {
-                println!("\ndziała\n");
                 last_dir = curr_dir;
             }
             println!("{}", dir.0);
@@ -223,10 +248,10 @@ fn main() {
 
         let direction_right = DIRECTIONS.get(modulo((curr_dir + 1).try_into().unwrap(), 4) as usize).unwrap();
         let direction_left = DIRECTIONS.get(modulo((curr_dir as i32 - 1), 4) as usize).unwrap();
-        println!("left {:?} right {:?}", direction_left, direction_right);
+        //println!("left {:?} right {:?}", direction_left, direction_right);
 
-        let y0 = direction_right[1] + current_pos[1] as i32;
         let x0 = direction_right[0] + current_pos[0] as i32;
+        let y0 = direction_right[1] + current_pos[1] as i32;
         let y1 = direction_left[1] + current_pos[1] as i32;
         let x1 = direction_left[0] + current_pos[0] as i32;
 
@@ -252,6 +277,9 @@ fn main() {
         if step == max {
             reached_max = true;
         }
+        if step == 0 {
+            break;
+        }
     }
     
     let mut lefts_n_rights_printed: Vec<Vec<i32>> = vec![vec![0; width]; height];
@@ -259,27 +287,24 @@ fn main() {
     fill_gaps(&mut lefts_n_rights_printed, turning_number.signum(), &distance_map);
 
     let mut sum = 0;
-    for line in &lefts_n_rights_printed {
-        for num in line {
+    for (y, line) in lefts_n_rights_printed.iter().enumerate() {
+        for (x, num) in line.iter().enumerate() {
             if *num == turning_number.signum() {
+                print!("{}", "#".green());
                 sum += 1;
+            } else {
+                print!("{}", {
+                    let c = input.lines().nth(y).unwrap().chars().nth(x).unwrap().to_string();
+                    if visited_tiles.contains(&(y, x)) {
+                        c.red()
+                    } else {
+                        c.white()
+                    }
+                });
             }
         }
+        println!();
     }
 
     println!("{}", sum);
-
-    println!("{}", input);
-    lefts_n_rights_printed.iter().for_each(|line| {
-        let result = line
-        .into_iter()
-        .map(|i| if *i == turning_number.signum() {
-            "#"
-        } else {
-            "."
-        })
-        .collect::<String>();
-        println!("{}", result);
-        });
-
 }
